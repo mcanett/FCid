@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client-js"
+  //output   = "..generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  //url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  first_name  String
+  last_name   String
+  role        RoleType
+  check_ins   AdolescentEvent[]
+  payments    Payment[]
+  cash_counts CashCount[]
+}
+
+model Adolescent {
+  id         Int                   @id @default(autoincrement())
+  first_name String
+  last_name  String
+  birthdate  DateTime
+  qr_code    String                @unique
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
+  status     AdolescentStatus      @default(ACTIVE)
+  stage      AdolescentStage       @default(TEENS)
+  conditions AdolescentCondition[]
+  events     AdolescentEvent[]
+  tutors     AdolescentTutor[]
+  inactivations AdolescentInactivation[]
+
+  @@unique([first_name, last_name, birthdate])
+}
+
+model AdolescentInactivation {
+  id            Int       @id @default(autoincrement())
+  adolescent_id Int
+  inactive_from DateTime
+  inactive_to   DateTime?
+  reason        InactivationReason
+  created_at    DateTime @default(now())
+  adolescent    Adolescent @relation(fields: [adolescent_id], references: [id])
+}
+
+model Tutor {
+  id          Int               @id @default(autoincrement())
+  first_name  String
+  last_name   String
+  phone       String
+  email       String?
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
+  adolescents AdolescentTutor[]
+}
+
+model AdolescentTutor {
+  id            Int        @id @default(autoincrement())
+  adolescent_id Int
+  tutor_id      Int
+  relationship  String
+  is_primary    Boolean    @default(false)
+  adolescent    Adolescent @relation(fields: [adolescent_id], references: [id])
+  tutor         Tutor      @relation(fields: [tutor_id], references: [id])
+
+  @@unique([adolescent_id, tutor_id])
+}
+
+model Condition {
+  id          Int                   @id @default(autoincrement())
+  name        String
+  type        ConditionType
+  description String?
+  created_at  DateTime              @default(now())
+  updated_at  DateTime              @updatedAt
+  adolescents AdolescentCondition[]
+}
+
+model AdolescentCondition {
+  id            Int        @id @default(autoincrement())
+  adolescent_id Int
+  condition_id  Int
+  observations  String?
+  adolescent    Adolescent @relation(fields: [adolescent_id], references: [id])
+  condition     Condition  @relation(fields: [condition_id], references: [id])
+
+  @@unique([adolescent_id, condition_id])
+}
+
+model Event {
+  id                      Int               @id @default(autoincrement())
+  name                    String            @unique
+  type                    EventType
+  start_date              DateTime
+  end_date                DateTime
+  presale_price           Decimal?          @db.Decimal(10, 2)
+  presale_expiration_date DateTime?
+  price                   Decimal?          @db.Decimal(10, 2)
+  exchange_rate_usd       Decimal?          @db.Decimal(10, 4)
+  created_at              DateTime          @default(now())
+  updated_at              DateTime          @updatedAt
+  adolescents             AdolescentEvent[]
+  cash_counts             CashCount[]
+}
+
+model AdolescentEvent {
+  id                Int        @id @default(autoincrement())
+  adolescent_id     Int
+  event_id          Int
+  user_id           Int
+  registration_date DateTime   @default(now())
+  adolescent        Adolescent @relation(fields: [adolescent_id], references: [id])
+  checked_in_by     User      @relation(fields: [user_id], references: [id])
+  event             Event      @relation(fields: [event_id], references: [id])
+  payments          Payment[]
+
+  @@unique([adolescent_id, event_id])
+}
+
+model Payment {
+  id                  Int             @id @default(autoincrement())
+  adolescent_event_id Int
+  user_id             Int
+  received_by         User           @relation(fields: [user_id], references: [id])
+  amount              Decimal         @db.Decimal(10, 2)
+  currency            Currency
+  given_change        Decimal?        @db.Decimal(10, 2)
+  created_at          DateTime        @default(now())
+  adolescent_event    AdolescentEvent @relation(fields: [adolescent_event_id], references: [id])
+}
+
+model CashCount {
+  id           Int      @id @default(autoincrement())
+  event_id     Int
+  user_id      Int
+  made_by      User    @relation(fields: [user_id], references: [id])
+  cash_bottom  Decimal  @db.Decimal(12, 2)
+  total_amount Decimal  @db.Decimal(12, 2)
+  total_change Decimal  @db.Decimal(12, 2)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  event        Event    @relation(fields: [event_id], references: [id])
+}
+
+enum RoleType {
+  ADMIN
+  LEAD
+  TREASURER
+  CAPTURATOR
+  VIEWER
+}
+
+enum AdolescentStage {
+  TEENS
+  YOUTH
+  UNIVERSITY
+  GRADUATED
+}
+
+enum AdolescentStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum InactivationReason {
+  ABSENCE
+  DISCIPLINARY
+  MANUAL
+}
+
+enum ConditionType {
+  DISEASE
+  ALLERGY
+  CONDITION
+  DISABILITY
+}
+
+enum EventType {
+  FRIDAY_CLASS
+  SUNDAY_CLASS
+  CALENDAR_EVENT
+  CAMP
+  SPECIAL_EVENT
+}
+
+enum Currency {
+  MXN
+  USD
+}

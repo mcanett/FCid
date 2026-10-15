@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Base ===== */
+@layer base {
+  html {
+    @apply h-full;
+  }
+
+  body {
+    @apply h-full bg-slate-900 text-slate-200 antialiased;
+  }
+
+  h1 {
+    @apply text-2xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-xl font-semibold;
+  }
+
+  h3 {
+    @apply text-lg font-semibold;
+  }
+
+  label {
+    @apply text-sm font-medium text-slate-400;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm
+           focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500
+           text-slate-800;
+  }
+}
+
+/* Ajustes SOLO al imprimir */
+@media print {
+  html,
+  body {
+    width: 50mm;
+    height: 80mm;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Ocultar layout */
+  
+  header {
+    display: none !important;
+  }
+
+  /* Mostrar SOLO la credencial */
+  .credential-page {
+    display: block !important;
+    width: 50mm;
+    height: 80mm;
+  }
+}
